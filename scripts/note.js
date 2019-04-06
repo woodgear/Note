@@ -43,8 +43,8 @@ function run(cmd) {
       const noteBinPath = path.normalize(path.join(__dirname, "../"))
       const noteBinConfigPath = path.join(noteBinPath, "config.json")
       fs.writeFileSync(noteBinConfigPath, JSON.stringify(noteConfig))
-      console.log("start watch")
-      const gatsby = exec(`npm run develop`, { cwd: noteBinPath })
+      console.log("start deploy")
+      const gatsby = exec(`npm run deploy`, { cwd: noteBinPath })
       gatsby.stdout.pipe(process.stdout)
       gatsby.stderr.pipe(process.stderr)
       gatsby.on("error", function(err) {
