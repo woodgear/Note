@@ -2,42 +2,133 @@ import React from "react"
 import { Link, graphql } from "gatsby"
 import { css } from "@emotion/core"
 import Layout from "../components/layout"
+import util from "../utils/util"
+class Article {
+  constructor(data) {
+    Object.assign(this, data)
+  }
 
-export default ({ data }) => {
-  const articles = data.allMarkdownRemark
+  static fromMarkDownNode(node) {
+    const { name, birthTime, changeTime, relativeDirectory } = node.parent
+    const directories =
+      relativeDirectory.split("\\").filter(s => s.length) || []
+    const [title, category, err] = Article.parserNameAndCategory(
+      directories,
+      name,
+      node.frontmatter.title
+    )
+    if (err) {
+      console.error("fromMarkDownNode fail", node, err)
+      return [null, "fromMarkDownNode fail"]
+    }
+    return [new Article({ title, category, birthTime, changeTime, node }), null]
+  }
 
-  return (
-    <Layout>
-      <div>
-        <h4>{articles.totalCount} Posts</h4>
-        {articles.edges.map(({ node }) => {
-          const fileNode = node.parent
-          return (
-            <div key={node.id}>
-              <Link
-                to={node.fields.slug}
-                css={css`
-                  text-decoration: none;
-                  color: inherit;
-                `}
-              >
-                <h3>
-                  {fileNode.name}
-                  <span
+  /*  
+  directories:Vec<NotEmptyString>
+  filenName:NotEmptyString,
+  frontmatterTitle:Option<NotEmptyString>
+  */
+
+  // why i use go err handle? why? T_T
+  static parserNameAndCategory(directories, fileName, frontmatterTitle) {
+    if (!fileName || fileName.length === 0) {
+      return [null, null, "fileName could not be empty"]
+    }
+    if (directories.length === 0 && fileName === "main") {
+      return [
+        null,
+        null,
+        "fileName could not be main when this file under root dir",
+      ]
+    }
+
+    let title = null
+    let category = []
+    if (directories.length === 0) {
+      title = fileName
+      category = []
+    } else if (
+      directories[directories.length - 1] === fileName ||
+      fileName === "main"
+    ) {
+      title = directories[directories.length - 1]
+      category = directories.slice(0, -1)
+    } else {
+      title = fileName
+      category = directories
+    }
+    if (frontmatterTitle) {
+      title = frontmatterTitle
+    }
+    return [title, category, null]
+  }
+
+  static renderIndexPage(data) {
+    const articles = data.sort(
+      (l, r) => new Date(r.changeTime) - new Date(l.changeTime)
+    )
+    return (
+      <Layout>
+        <div>
+          <h4>{articles.length} Posts</h4>
+          {articles.map(article => {
+            return (
+              <div key={article.node.id}>
+                <Link
+                  to={article.node.fields.slug}
+                  css={css`
+                    text-decoration: none;
+                  `}
+                >
+                  <div
+                    className="article"
                     css={css`
-                      color: #bbb;
+                      margin-bottom: 10px;
                     `}
                   >
-                    — {fileNode.changeTime}
-                  </span>
-                </h3>
-              </Link>
-            </div>
-          )
-        })}
-      </div>
-    </Layout>
-  )
+                    <div
+                      className="category"
+                      css={css`
+                        color: black;
+                      `}
+                    >
+                      category: {article.category.join("->")}
+                    </div>
+                    <div className="title">
+                      <span
+                        css={css`
+                          font-size: 150%;
+                        `}
+                      >
+                        {article.title}
+                      </span>
+                      -
+                      <span
+                        css={css`
+                          font-size: 100%;
+                        `}
+                      >
+                        {util.timeAgo(article.changeTime, new Date())}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+            )
+          })}
+        </div>
+      </Layout>
+    )
+  }
+}
+
+export default ({ data }) => {
+  const allArticles = data.allMarkdownRemark.edges
+    .map(({ node }) => Article.fromMarkDownNode(node))
+    .filter(([article, err]) => !err)
+    .map(([article, err]) => article)
+  return Article.renderIndexPage(allArticles)
 }
 
 export const query = graphql`
@@ -50,13 +141,18 @@ export const query = graphql`
           fields {
             slug
           }
+          frontmatter {
+            title
+            tag
+          }
+
           parent {
             ... on File {
-              mtime
-              birthtimeMs
-              absolutePath
               name
+              ext
+              birthTime
               changeTime
+              relativeDirectory
             }
           }
         }
