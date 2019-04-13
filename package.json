@@ -11,7 +11,8 @@
     "start": "npm run develop",
     "serve": "gatsby serve",
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\"",
-    "deploy": "gatsby build && node ./scripts/deploy-gitrepo"
+    "deploy": "gatsby build && node ./scripts/deploy-gitrepo",
+    "init": "npm install && npm link"
   },
   "dependencies": {
     "@emotion/core": "^10.0.10",
