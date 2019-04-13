@@ -9,19 +9,17 @@
     "develop": "gatsby develop",
     "format": "prettier --write src/**/*.{js,jsx}",
     "start": "npm run develop",
-    "serve": "gatsby serve",
-    "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\"",
     "deploy": "gatsby build && node ./scripts/deploy-gitrepo",
-    "init": "npm install && npm link"
+    "upgrade": "git pull origin master && npm ci && npm link"
   },
   "dependencies": {
     "@emotion/core": "^10.0.10",
     "docopt": "^0.6.2",
-    "gatsby": "^2.3.5",
+    "gatsby": "^2.3.22",
     "gatsby-plugin-emotion": "^4.0.6",
-    "gatsby-plugin-typography": "^2.2.10",
-    "gatsby-remark-prismjs": "^3.2.7",
-    "gatsby-source-filesystem": "^2.0.28",
+    "gatsby-plugin-typography": "^2.2.13",
+    "gatsby-remark-prismjs": "^3.2.8",
+    "gatsby-source-filesystem": "^2.0.29",
     "gatsby-transformer-remark": "^2.3.8",
     "gh-pages": "^2.0.1",
     "node-cmd": "^3.0.0",
@@ -36,7 +34,7 @@
     "typography-theme-kirkham": "^0.16.19"
   },
   "devDependencies": {
-    "prettier": "^1.16.4"
+    "prettier": "^1.17.0"
   },
   "bin": {
     "note": "./scripts/note.js"
