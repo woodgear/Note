@@ -30,8 +30,6 @@ xxxx,[..,a],b => b,[],null
 * time diff
 * group sort
 * empty article
-* readme
-* tag
 * image
 * gatsby-remark-prismjs cpp haskhell
 * ts
