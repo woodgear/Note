@@ -142,7 +142,7 @@ export const query = graphql`
             slug
           }
           frontmatter {
-            title
+            title,
             tag
           }
 

@@ -111,6 +111,33 @@ create_time: ${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}
         console.log(`create file ${fullPath}`)
         fs.writeFileSync(fullPath, context)
     }
+    if (isMutliFilePackage && !useTimeAsTitle) {
+        console.log('isMutliFilePackage')
+        const pathObj = path.parse(fullPath);
+        const isParentDirExists = fs.existsSync(pathObj.dir);
+        //make sure path is unique and init dir
+        if (isParentDirExists) {
+            const parentPathStatus = fs.statSync(pathObj.dir);
+            const parentPathisDir = parentPathStatus.isDirectory();
+            if (!parentPathisDir) {
+                console.error(`${pathObj.dir} is not a directory`)
+                return;
+            }
+            if (fs.existsSync(fullPath)) {
+                console.error(`${fullPath} has exists you could not create new one`)
+                return
+            }
+        } else {
+            console.log(`create diretory ${pathObj.dir}`)
+            mkdirp.sync(pathObj.dir);
+        }
+        if (!fs.existsSync(fullPath)) {
+            console.log("create mp diretory",fullPath)
+            mkdirp.sync(fullPath);
+            contextFullPath = path.join(fullPath,"main.md")
+            fs.writeFileSync(contextFullPath, context)
+        }
+    }
 }
 
 function cmdFix(args) {
