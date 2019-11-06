@@ -153,7 +153,7 @@ function cmdWatch(args) {
         const noteBinPath = path.normalize(path.join(__dirname, "../"))
         const noteBinConfigPath = path.join(noteBinPath, "config.json")
         fs.writeFileSync(noteBinConfigPath, JSON.stringify(noteConfig))
-        console.log("start watch")
+        console.log("start watch",noteBinPath)
         const gatsby = exec(`npm run develop`, { cwd: noteBinPath })
         gatsby.stdout.pipe(process.stdout)
         gatsby.stderr.pipe(process.stderr)

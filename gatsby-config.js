@@ -12,11 +12,19 @@ module.exports = {
         path: config.blog.path,
       },
     },
-    `gatsby-plugin-emotion`,
+    {
+      resolve: `gatsby-plugin-emotion`,
+    },
     {
       resolve: `gatsby-transformer-remark`,
       options: {
         plugins: [
+          {
+            resolve: "gatsby-remark-copy-linked-files",
+            options: {
+              ignoreFileExtensions: [],
+            },
+          },
           {
             resolve: `gatsby-remark-prismjs`,
             options: {
