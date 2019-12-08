@@ -10,7 +10,8 @@
     "develop": "rm -rf .cache && gatsby develop",
     "format": "prettier --write src/**/*.{js,jsx}",
     "deploy": "gatsby build && node ./scripts/deploy-gitrepo",
-    "upgrade": "git pull origin master && npm ci && npm link"
+    "upgrade": "git pull origin master && npm ci && npm link",
+    "init": "npm install && npm link"
   },
   "dependencies": {
     "@emotion/core": "^10.0.10",
