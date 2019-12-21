@@ -6,6 +6,10 @@ const { exec, execSync, spawn, spawnSync } = require("child_process")
 const randomId = require("random-id")
 const mkdirp = require('mkdirp');
 const dateFormat = require('dateformat');
+const unified = require('unified')
+const markdown = require('remark-parse')
+var frontmatter = require('remark-frontmatter')
+const jsYaml = require('js-yaml');
 
 // const doc = `
 // usage:
@@ -141,7 +145,20 @@ create_time: ${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}
 }
 
 function cmdFix(args) {
+    const abs_path  = path.join(process.cwd(),args["<PATH>"]);
+    if (!fs.existsSync(abs_path)) {
+        console.log(`sorry but ${abs_path} not exists`);
+        return;
+    }
 
+    if (path.extname(abs_path)!=='.md') {
+        console.log(`sorry but ${abs_path} is not a md file`);
+        return;
+    }
+    const rawMd = fs.readFileSync(abs_path,'utf8');
+    // console.log(rawMd)
+    const newMd = addIdInMd(rawMd);
+    fs.writeFileSync(abs_path,newMd);
 }
 
 function cmdWatch(args) {
@@ -206,8 +223,40 @@ function main() {
     }
 }
 
+function pickConfigFromMdAst(ast) {
+    if (!!!ast) {
+        return [{},0]
+    }
+    if (!!!ast.children[0]) {
+        return [{},0]
+    }
+    if (ast.children[0].type!=="yaml") {
+        return [{},0]
+    }
+    console.log(ast);
+    return  [jsYaml.safeLoad(ast.children[0].value),ast.children[0].position.end.offset];
+}
+
+function addIdInMd(rawMd,id) {
+    const mdId = id|| randomId(7).toLowerCase();
+    const processor = unified().use(markdown, {commonmark: true}).use(frontmatter, ['yaml'])
+    const ast = processor.parse(rawMd);
+    const [config,offset] = pickConfigFromMdAst(ast);
+
+    // if has id donothing
+    if (!!!config.id) {
+        config["id"] = mdId;
+    }
+    console.log("offset",offset)
+    const mdConfig = jsYaml.safeDump(config);
+    console.log(typeof rawMd)
+    const mdWithoutConfig = rawMd.slice(offset).trim();
+    const fixedMd = `---\n${mdConfig}---\n\n`+mdWithoutConfig;
+    return fixedMd
+}
+
 if (require.main === module) {
     main();
 }
 
-module.exports = { parseArgs }
+module.exports = { parseArgs,addIdInMd }
