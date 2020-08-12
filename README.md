@@ -27,12 +27,14 @@ xxxx,[..,a],b => b,[],null
 xxxx,[..,a],b => b,[],null
 
 # TODO
-* time diff
-* group sort
-* empty article
-* image
-* gatsby-remark-prismjs cpp haskhell
-* ts
-* support of draft state
-* rss
-* unit test
+- [x] disqus
+- [] category 
+- [] time diff
+- [] group sort
+- [] empty article
+- [] image
+- [] gatsby-remark-prismjs cpp haskhell
+- [] ts
+- [] support of draft state
+- [] rss
+- [] unit test

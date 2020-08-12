@@ -10,6 +10,8 @@ const unified = require('unified')
 const markdown = require('remark-parse')
 var frontmatter = require('remark-frontmatter')
 const jsYaml = require('js-yaml');
+const util = require("./util")
+const moment = require("moment-timezone")
 
 // const doc = `
 // usage:
@@ -58,7 +60,7 @@ function cmdNew(args) {
     const context = `---
 id: ${id}
 ${tag.length === 0 ? '' : `tag: ${tag.join(',')}\n`}\
-create_time: ${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}
+time: ${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}
 --- `;
 
     const isAbsolutePath = path.isAbsolute(pathStr);
@@ -136,29 +138,61 @@ create_time: ${dateFormat(new Date(), 'yyyy-mm-dd-HH-MM-ss')}
             mkdirp.sync(pathObj.dir);
         }
         if (!fs.existsSync(fullPath)) {
-            console.log("create mp diretory",fullPath)
+            console.log("create mp diretory", fullPath)
             mkdirp.sync(fullPath);
-            contextFullPath = path.join(fullPath,"main.md")
+            contextFullPath = path.join(fullPath, "main.md")
             fs.writeFileSync(contextFullPath, context)
         }
     }
 }
 
+
 function cmdFix(args) {
-    const abs_path  = path.join(process.cwd(),args["<PATH>"]);
-    if (!fs.existsSync(abs_path)) {
-        console.log(`sorry but ${abs_path} not exists`);
-        return;
+    let mdpath = args["<PATH>"]
+    if (!fs.existsSync(mdpath)) {
+        path = path.join(process.cwd(), path);
+        if (!fs.existsSync(path)) {
+            console.error(`sorry but ${path} not exists`);
+            process.exit(-1)
+        }
     }
 
-    if (path.extname(abs_path)!=='.md') {
-        console.log(`sorry but ${abs_path} is not a md file`);
+    if (path.extname(mdpath) !== '.md') {
+        console.log(`sorry but ${mdpath} is not a md file`);
         return;
     }
-    const rawMd = fs.readFileSync(abs_path,'utf8');
-    // console.log(rawMd)
-    const newMd = addIdInMd(rawMd);
-    fs.writeFileSync(abs_path,newMd);
+    const rawMd = fs.readFileSync(mdpath, 'utf8');
+    const [config, _] = pickConfigFromMd(rawMd)
+    const state = fs.statSync(mdpath)
+    const oldestTime = util.minTime([state.atime, state.mtime, state.ctime, state.birthtime])
+
+    if (config["time"]) {
+        if (typeof config["time"] != "string") {
+            const time = moment.tz(config["time"], "Asia/Shanghai").format()
+            config.time = time
+        }
+        const time = new Date(config["time"])
+        if (isNaN(time)) {
+            const time = moment(config["time"], "YYYY-MM-DD-HH-mm-ss").format();
+            console.log(mdpath, time, typeof time);
+            config.time = time
+        }
+    }
+
+    if (!config["time"]) {
+        config.time = moment.tz(oldestTime, "Asia/Shanghai").format()
+    }
+
+    if (!config["id"]) {
+        console.log('update id??');
+        config.id = randomId(7).toLowerCase()
+    } else {
+        config.id = `${config.id}`
+    }
+
+
+    const newMd = upsertConfig(rawMd, config);
+    fs.writeFileSync(mdpath, newMd);
 }
 
 function cmdWatch(args) {
@@ -170,7 +204,7 @@ function cmdWatch(args) {
         const noteBinPath = path.normalize(path.join(__dirname, "../"))
         const noteBinConfigPath = path.join(noteBinPath, "config.json")
         fs.writeFileSync(noteBinConfigPath, JSON.stringify(noteConfig))
-        console.log("start watch",noteBinPath)
+        console.log("start watch", noteBinPath)
         const gatsby = exec(`npm run develop`, { cwd: noteBinPath })
         gatsby.stdout.pipe(process.stdout)
         gatsby.stderr.pipe(process.stderr)
@@ -223,40 +257,49 @@ function main() {
     }
 }
 
-function pickConfigFromMdAst(ast) {
-    if (!!!ast) {
-        return [{},0]
-    }
-    if (!!!ast.children[0]) {
-        return [{},0]
-    }
-    if (ast.children[0].type!=="yaml") {
-        return [{},0]
-    }
-    console.log(ast);
-    return  [jsYaml.safeLoad(ast.children[0].value),ast.children[0].position.end.offset];
+function pickConfigFromMd(rawMd) {
+    const processor = unified().use(markdown, { commonmark: true }).use(frontmatter, ['yaml'])
+    const ast = processor.parse(rawMd);
+    return pickConfigFromMdAst(ast)
 }
 
-function addIdInMd(rawMd,id) {
-    const mdId = id|| randomId(7).toLowerCase();
-    const processor = unified().use(markdown, {commonmark: true}).use(frontmatter, ['yaml'])
+// return config and the offset of the end of config
+function pickConfigFromMdAst(ast) {
+    if (!!!ast) {
+        return [{}, 0]
+    }
+    if (!!!ast.children[0]) {
+        return [{}, 0]
+    }
+    if (ast.children[0].type !== "yaml") {
+        return [{}, 0]
+    }
+    return [jsYaml.safeLoad(ast.children[0].value), ast.children[0].position.end.offset];
+}
+
+function upsertConfig(rawMd, config) {
+    const processor = unified().use(markdown, { commonmark: true }).use(frontmatter, ['yaml'])
     const ast = processor.parse(rawMd);
-    const [config,offset] = pickConfigFromMdAst(ast);
+    const [_, offset] = pickConfigFromMdAst(ast);
+    const mdConfig = jsYaml.safeDump(config);
+    const mdWithoutConfig = rawMd.slice(offset).trim();
+    const fixedMd = `---\n${mdConfig}---\n\n` + mdWithoutConfig;
+    return fixedMd
+}
+
+function addIdInMd(rawMd, id) {
+    const mdId = id || randomId(7).toLowerCase();
+    const [config, offset] = pickConfigFromMd(rawMd);
 
     // if has id donothing
     if (!!!config.id) {
         config["id"] = mdId;
     }
-    console.log("offset",offset)
-    const mdConfig = jsYaml.safeDump(config);
-    console.log(typeof rawMd)
-    const mdWithoutConfig = rawMd.slice(offset).trim();
-    const fixedMd = `---\n${mdConfig}---\n\n`+mdWithoutConfig;
-    return fixedMd
+    return upsertConfig(rawMd, config)
 }
 
 if (require.main === module) {
     main();
 }
 
-module.exports = { parseArgs,addIdInMd }
+module.exports = { parseArgs, addIdInMd }
