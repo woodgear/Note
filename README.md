@@ -28,7 +28,7 @@ xxxx,[..,a],b => b,[],null
 
 # TODO
 - [x] disqus
-- [] category 
+- [x] category 
 - [] time diff
 - [] group sort
 - [] empty article
