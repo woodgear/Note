@@ -35,6 +35,8 @@ usage:
     note fix <PATH> [--tmp]
     note watch
     note deploy
+    note build
+
 Arguments:
   PATH  destination path
 Options:
@@ -216,7 +218,16 @@ function cmdWatch(args) {
     }
 }
 
+
 function cmdDeploy(args) {
+    callGatsby("deploy")
+}
+
+function cmdBuild() {
+    callGatsby("build")
+}
+
+function callGatsby(cmd) {
     const cwd = process.cwd()
     const noteConfigPath = path.join(cwd, ".note.config.json")
     if (fs.existsSync(noteConfigPath)) {
@@ -229,7 +240,7 @@ function cmdDeploy(args) {
         const noteBinConfigPath = path.join(noteBinPath, "config.json")
         fs.writeFileSync(noteBinConfigPath, JSON.stringify(noteConfig))
         console.log("start deploy")
-        const gatsby = exec(`npm run deploy`, { cwd: noteBinPath })
+        const gatsby = exec(`npm run ${cmd}`, { cwd: noteBinPath })
         gatsby.stdout.pipe(process.stdout)
         gatsby.stderr.pipe(process.stderr)
         gatsby.on("error", function (err) {
@@ -245,6 +256,7 @@ const cmdMatchMap = {
     "fix": cmdFix,
     "watch": cmdWatch,
     "deploy": cmdDeploy,
+    "build":cmdBuild,
 };
 
 function main() {

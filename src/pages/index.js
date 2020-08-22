@@ -67,8 +67,12 @@ function renderIndexPage(data, category) {
 }
 
 export default ({ data }) => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const category = urlParams.get('category') || ""
+    let category = ""
+    // server side render
+    if (typeof window != 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        category = urlParams.get('category') || ""
+    }
 
     const allArticles = data.allMarkdownRemark.edges
         .map(({ node }) => Article.fromMarkDownNode(node))

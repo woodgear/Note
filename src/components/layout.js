@@ -58,7 +58,6 @@ export default ({ children }) => (
       }
     `}
         render={data => {
-            console.log(data)
             const siteTitle = data.site.siteMetadata.title
             const allArticles = data.allMarkdownRemark.edges
                 .map(({ node }) => Article.fromMarkDownNode(node))

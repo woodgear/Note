@@ -3,8 +3,7 @@ import { graphql } from "gatsby"
 import Layout from "../components/layout"
 
 export default ({ data }) => {
-    const node = data;
-    const post = node.markdownRemark
+    const post = data.allMarkdownRemark.edges[0].node
     return (
         <Layout>
             <div>
