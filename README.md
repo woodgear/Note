@@ -2,7 +2,7 @@
 基于gatsby简单封装
 # 如何使用
 1. git clone
-2. npm run init
+2. sudo npm run init
 4. into you blog path note watch/deploy
 # file format
 ## 唯一原则
