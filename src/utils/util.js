@@ -20,4 +20,12 @@ function timeAgo(left, right) {
   return "1分钟内"
 }
 
-export default { timeAgo }
+function findUnionValues(array1, array2) {
+  const array2Set = new Set(array2)
+  const intersection = array1.filter(x => {
+    return array2Set.has(x)
+  })
+  return Array.from(intersection)
+}
+
+export default { timeAgo, findUnionValues }
